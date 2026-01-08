@@ -12,7 +12,7 @@ import gc
 # ==========================================
 # 設定區 
 # ==========================================
-GAS_URL = "你的網址"
+GAS_URL = "https://script.google.com/macros/s/AKfycbzKDhZvjdHClDMXHGdD0UG7sdhmKO4WHprAmV_RxHLzbpOQghF8KWyxhZrPOATL_euj/exec"
 UTC_OFFSET = 8 * 3600 
 
 # -----------------------------
@@ -168,44 +168,66 @@ def scan_wifi():
     max_index = len(new_list); current_index = 0
     return new_list
 
-def api_request(payload):
-    gc.collect() # 請求前清理記憶體
-    print("發送請求...", payload)
+def api_request(payload, max_retries=3):
+    # 1. 組合網址
+    params = ""
+    for key in payload:
+        params += "&" + key + "=" + str(payload[key])
+    full_url = GAS_URL + "?device=esp32" + params
     
-    res = None # 先宣告變數，避免報錯
-    try:
-        params = ""
-        for key in payload:
-            params += "&" + key + "=" + str(payload[key])
-        full_url = GAS_URL + "?device=esp32" + params
-        
-        # 發送 GET 請求
-        res = urequests.get(full_url)
-        print("狀態碼:", res.status_code)
-        
-        data = None
-        try:
-            data = res.json()
-        except:
-            print("JSON 解析失敗 (可能收到 HTML)")
-            
-        # 正常結束，關閉連線
-        if res: res.close()
-        
-        # 強制休息 1 秒，讓 Socket 釋放
-        time.sleep(1) 
+    # 2. 關鍵修正：加入 Connection: close 表頭
+    # 這告訴 Google 伺服器：「回傳完資料請馬上掛斷，不要佔線」
+    headers = {
+        'Connection': 'close',
+        'User-Agent': 'Mozilla/5.0' # 偽裝一下比較不會被擋
+    }
+    
+    for attempt in range(max_retries):
         gc.collect() 
-        return data
         
-    except Exception as e:
-        print("API 錯誤:", e)
-        # 如果發生錯誤，也要嘗試關閉連線
-        if res: 
-            try: res.close()
-            except: pass
-        # 錯誤後也休息一下
-        time.sleep(1)
-        return None
+        if attempt > 0:
+            print(f"等待資源釋放... ({attempt}/{max_retries})")
+            time.sleep(2)
+            
+        print(f"發送請求...")
+        res = None
+        try:
+            # 發送請求 (帶上 headers)
+            res = urequests.get(full_url, headers=headers)
+            print("狀態碼:", res.status_code)
+            
+            data = None
+            try:
+                data = res.json()
+            except:
+                print("JSON 解析失敗")
+            
+            # 關閉連線
+            if res:
+                res.close()
+                del res # 強制刪除物件
+            
+            gc.collect() # 再次清理
+            return data
+                
+        except OSError as e:
+            print(f"連線錯誤: {e}")
+            if res:
+                try: res.close()
+                except: pass
+            
+            # 如果是 Error 16，休息一下再試，通常 Connection: close 會解決它
+            if "16" in str(e):
+                time.sleep(1)
+                
+        except Exception as e:
+            print(f"其他錯誤: {e}")
+            if res:
+                try: res.close()
+                except: pass
+            
+    print("多次嘗試失敗，放棄。")
+    return None
 # -----------------------------
 # 5. 邏輯處理
 # -----------------------------
@@ -567,3 +589,5 @@ while True:
         display_needs_update = False
         
     time.sleep_ms(20)
+
+
