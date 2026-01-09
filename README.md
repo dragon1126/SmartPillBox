@@ -148,7 +148,7 @@ SmartPillBox/
 
 ## 主UI結構
 
-'''
+```
 SmartPillBox_UI_Architecture/
 ├── Device_Side_OLED (ESP32_FSM)/       # 裝置端介面 (有限狀態機)
 │   ├── 1. Startup_Sequence/            # 開機流程
@@ -184,7 +184,7 @@ SmartPillBox_UI_Architecture/
             ├── Alarm_Alert             # "⏰ 時間到了！請記得吃藥"
             └── Action_Confirm          # "✅ 您已按下實體按鈕，紀錄成功"
             
-'''
+```
 
 ##  常見問題排除 (Troubleshooting)
 
