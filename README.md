@@ -144,6 +144,48 @@ SmartPillBox/
 
 ```
 
+
+
+## 主UI結構
+
+'''
+SmartPillBox_UI_Architecture/
+├── Device_Side_OLED (ESP32_FSM)/       # 裝置端介面 (有限狀態機)
+│   ├── 1. Startup_Sequence/            # 開機流程
+│   │   ├── WiFi_Scanning_View          # [SCAN_VIEW] 掃描周遭 WiFi
+│   │   └── Password_Input_View         # [PASSWORD_INPUT] 旋轉輸入 WiFi 密碼
+│   │
+│   ├── 2. Main_Display (Idle)/         # 待機主畫面
+│   │   └── Clock_View                  # [CLOCK_VIEW]
+│   │       ├── Information             # 顯示：現在時間 / 鬧鐘時間 / 當日吃藥狀態[V][ ]
+│   │       └── Interaction             # 動作：按下旋鈕 -> 進入選單
+│   │
+│   ├── 3. Menu_System/                 # 選單系統 [MENU_SELECT]
+│   │   ├── Set_Time                    # -> 進入 [SET_HOUR] -> [SET_MINUTE]
+│   │   ├── Set_Days                    # -> 進入 [SET_WEEKDAY] (開關特定星期)
+│   │   ├── Sync_Cloud                  # -> 觸發 API (GET_CONFIG) 同步雲端設定
+│   │   ├── Bind_User                   # -> 進入 [BIND_INPUT] 輸入 6 位綁定碼
+│   │   ├── Log_Now                     # -> 觸發 API (EAT) 手動上傳紀錄
+│   │   └── Back                        # -> 返回主畫面
+│   │
+│   └── 4. Alert_Mode/                  # 警報模式
+│       └── Alarm_Ringing               # [ALARM_RINGING]
+│           ├── Display                 # 顯示 "Time to Eat!" 閃爍
+│           └── Exit_Trigger            # 動作：按下按鈕 或 打開藥盒 -> 停止並上傳
+│
+└── Mobile_Side_LINE (Chat_Interface)/  # 手機端介面 (LINE Bot)
+    └── Conversational_UI/
+        ├── Input_Commands/             # 使用者輸入指令
+        │   ├── Setup_Alarm (NLP)       # 輸入 "每天9點吃藥" -> 解析並存入 Google Sheet
+        │   ├── User_Binding            # 輸入 "綁定" -> 產生驗證碼
+        │   └── Manual_Log              # 輸入 "吃藥" -> 雲端紀錄
+        │
+        └── Push_Notifications/         # 系統主動推播
+            ├── Alarm_Alert             # "⏰ 時間到了！請記得吃藥"
+            └── Action_Confirm          # "✅ 您已按下實體按鈕，紀錄成功"
+            
+'''
+
 ##  常見問題排除 (Troubleshooting)
 
 * **ESP32 顯示 `API Error: 16**`
