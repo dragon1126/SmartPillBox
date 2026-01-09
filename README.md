@@ -181,8 +181,8 @@ SmartPillBox_UI_Architecture/
         │   └── Manual_Log              # 輸入 "吃藥" -> 雲端紀錄
         │
         └── Push_Notifications/         # 系統主動推播
-            ├── Alarm_Alert             # "⏰ 時間到了！請記得吃藥"
-            └── Action_Confirm          # "✅ 您已按下實體按鈕，紀錄成功"
+            ├── Alarm_Alert             # " 時間到了！請記得吃藥"
+            └── Action_Confirm          # " 您已按下實體按鈕，紀錄成功"
             
 ```
 
